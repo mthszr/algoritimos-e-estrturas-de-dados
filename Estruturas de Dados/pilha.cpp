@@ -51,4 +51,18 @@ public:
             cout << pilha[i] << " ";
         }
     }
+
+    //função que retorna o tamanho da pilha
+    int tamanho() {
+        return topo + 1;
+    }
+
+    // função que retorna o elemento no topo da pilha
+    int top() {
+        if (topo >= 0)
+        {
+            return pilha[topo]; // elemento no topo da pilha
+        }
+        return -1; // retorna -1 se a pilha estiver vazia
+    }
 };
