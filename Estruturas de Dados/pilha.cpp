@@ -34,7 +34,7 @@ public:
             pilha = novaPilha; 
         }    
 
-        // adiciona elemento ao vetor
+        // adiciona elemento à pilha
         pilha[++topo] = elemento;
     
     }
@@ -44,7 +44,7 @@ public:
         return topo == -1;
     }
 
-    // função para imprimir os elementos do vetor
+    // função para imprimir os elementos da pilha, de baixo para cima
     void imprimirElementos () {
         cout << "Elementos da pilha:" << endl;
         for (int i = 0; i <= topo; i++) {
