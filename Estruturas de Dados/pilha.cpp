@@ -8,8 +8,10 @@ private:
     int topo; // indice do topo da pilha (-1 se vazia)
 
 public:
+    // construtor
     Pilha() : pilha(nullptr), capacidade(0), topo(-1) {}
 
+    // destrutor
     ~Pilha() {
         delete[] pilha;
     }
@@ -40,27 +42,26 @@ public:
     }
 
     // função para verificar se a pilha está vazia
-    bool vazia() {
+    bool estaVazia() {
         return topo == -1;
     }
 
     // função para imprimir os elementos da pilha, de baixo para cima
-    void imprimirElementos () {
+    void imprimir () {
         cout << "Elementos da pilha:" << endl;
         for (int i = 0; i <= topo; i++) {
             cout << pilha[i] << " ";
         }
     }
 
-    //função que retorna o tamanho da pilha
+    // função que retorna o tamanho da pilha
     int tamanho() {
         return topo + 1;
     }
 
     // função que retorna o elemento no topo da pilha
     int top() {
-        if (topo >= 0)
-        {
+        if (topo >= 0) {
             return pilha[topo]; // elemento no topo da pilha
         }
         return -1; // retorna -1 se a pilha estiver vazia
