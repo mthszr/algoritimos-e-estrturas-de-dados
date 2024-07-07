@@ -5,317 +5,321 @@
 
 using namespace std;
 
+// classe que representa uma pilha usando vector
 class Pilha
 {
 private:
-    vector<int> pilha;
+    vector<int> pilha; // vetor que armazena os elementos da pilha
 
 public:
-    // Construtor
+    // construtor padrão
     Pilha() = default;
 
-    // Função para adicionar um elemento à pilha
+    // função para adicionar um elemento à pilha
     void empilhar(int elemento)
     {
-        pilha.push_back(elemento);
+        pilha.push_back(elemento); // adiciona o elemento ao final do vetor
     }
 
-    // Função para remover o elemento do topo da pilha
+    // função para remover o elemento do topo da pilha
     void desempilhar()
     {
-        if (!estaVazia())
+        if (!estaVazia()) // verifica se a pilha não está vazia
         {
-            pilha.pop_back();
+            pilha.pop_back(); // remove o último elemento do vetor
         }
     }
 
-    // Função para verificar se a pilha está vazia
+    // função para verificar se a pilha está vazia
     bool estaVazia() const
     {
-        return pilha.empty();
+        return pilha.empty(); // retorna verdadeiro se o vetor estiver vazio
     }
 
-    // Função para imprimir os elementos da pilha, de baixo para cima
+    // função para imprimir os elementos da pilha, de baixo para cima
     void imprimir() const
     {
-        for (const auto &elem : pilha)
+        for (const auto &elem : pilha) // percorre todos os elementos da pilha
         {
-            cout << elem << " ";
+            cout << elem << " "; // imprime cada elemento seguido de um espaço
         }
     }
 
-    // Função que retorna o tamanho da pilha
+    // função que retorna o tamanho da pilha
     int tamanho() const
     {
-        return pilha.size();
+        return pilha.size(); // retorna o tamanho do vetor
     }
 
-    // Função que retorna o elemento no topo da pilha
+    // função que retorna o elemento no topo da pilha
     int consultarTopo() const
     {
-        return pilha.empty() ? -1 : pilha.back();
+        return pilha.empty() ? -1 : pilha.back(); // retorna o último elemento do vetor ou -1 se a pilha estiver vazia
     }
 };
 
-// Definindo uma Fila onde cada nó é uma Pilha
+// definindo uma fila onde cada nó é uma pilha
 class FilaDePilhas
 {
+    // estrutura que representa um nó da fila, que contém uma pilha e um ponteiro para o próximo nó
     struct Node
     {
-        Pilha pilha;
-        Node *proximo = nullptr;
+        Pilha pilha;             // pilha associada ao nó
+        Node *proximo = nullptr; // ponteiro para o próximo nó
     };
 
 private:
-    Node *inicio = nullptr;
-    Node *fim = nullptr;
-    int tamanho = 0;
+    Node *inicio = nullptr; // ponteiro para o início da fila
+    Node *fim = nullptr;    // ponteiro para o fim da fila
+    int tamanho = 0;        // tamanho da fila
 
 public:
-    // Construtor
+    // construtor padrão
     FilaDePilhas() = default;
 
-    // Função para verificar se a fila está vazia
+    // função para verificar se a fila está vazia
     bool estaVazia() const
     {
-        return inicio == nullptr;
+        return inicio == nullptr; // retorna verdadeiro se o início for nulo
     }
 
-    // Função para adicionar uma nova pilha à fila
+    // função para adicionar uma nova pilha à fila
     void enfileirar()
     {
-        Node *novoNode = new Node();
-        if (estaVazia())
+        Node *novoNode = new Node(); // cria um novo nó
+        if (estaVazia())             // se a fila estiver vazia
         {
-            inicio = fim = novoNode;
+            inicio = fim = novoNode; // o novo nó é o início e o fim da fila
         }
         else
         {
-            fim->proximo = novoNode;
-            fim = novoNode;
+            fim->proximo = novoNode; // o próximo do fim atual aponta para o novo nó
+            fim = novoNode;          // o novo nó é o novo fim da fila
         }
-        ++tamanho;
+        ++tamanho; // incrementa o tamanho da fila
     }
 
-    // Função para adicionar uma nova pilha ao começo da fila
+    // função para adicionar uma nova pilha ao começo da fila
     void adicionarAoComeco()
     {
-        Node *novoNode = new Node();
-        novoNode->proximo = inicio;
-        if (estaVazia())
+        Node *novoNode = new Node(); // cria um novo nó
+        novoNode->proximo = inicio;  // o próximo do novo nó aponta para o início atual
+        if (estaVazia())             // se a fila estiver vazia
         {
-            fim = novoNode;
+            fim = novoNode; // o novo nó é o fim da fila
         }
-        inicio = novoNode;
-        ++tamanho;
+        inicio = novoNode; // o novo nó é o novo início da fila
+        ++tamanho;         // incrementa o tamanho da fila
     }
 
-    // Função para remover a pilha na frente da fila
+    // função para remover a pilha na frente da fila
     void desenfileirar()
     {
-        if (estaVazia())
+        if (estaVazia()) // se a fila estiver vazia
         {
-            return;
+            return; // não faz nada
         }
 
-        Node *temp = inicio;
-        inicio = inicio->proximo;
-        delete temp;
-        --tamanho;
+        Node *temp = inicio;      // armazena o início atual
+        inicio = inicio->proximo; // o início é atualizado para o próximo nó
+        delete temp;              // deleta o antigo início
+        --tamanho;                // decrementa o tamanho da fila
     }
 
-    // Função para empilhar um elemento em uma pilha específica
+    // função para empilhar um elemento em uma pilha específica
     void empilharNaPilha(int posicao, int elemento)
     {
-        if (posicao < 0 || posicao >= tamanho)
+        if (posicao < 0 || posicao >= tamanho) // verifica se a posição é válida
         {
-            cout << "Posição inválida" << endl;
-            return;
+            cout << "posição inválida" << endl; // imprime mensagem de erro
+            return;                             // retorna sem fazer nada
         }
 
-        Node *atual = inicio;
-        for (int i = 0; i < posicao; ++i)
+        Node *atual = inicio;             // começa pelo início da fila
+        for (int i = 0; i < posicao; ++i) // percorre até a posição desejada
         {
             atual = atual->proximo;
         }
-        atual->pilha.empilhar(elemento);
+        atual->pilha.empilhar(elemento); // empilha o elemento na pilha desejada
     }
 
-    // Função para remover as pedras de uma coluna se o topo tiver a mesma cor
+    // função para remover as pedras de uma coluna se o topo tiver a mesma cor
     void removerPedras(int posicao, int cor)
     {
-        if (posicao < 0 || posicao >= tamanho)
+        if (posicao < 0 || posicao >= tamanho) // verifica se a posição é válida
         {
-            cout << "Posição inválida" << endl;
-            return;
+            cout << "posição inválida" << endl; // imprime mensagem de erro
+            return;                             // retorna sem fazer nada
         }
 
-        Node *atual = inicio;
-        for (int i = 0; i < posicao; ++i)
+        Node *atual = inicio;             // começa pelo início da fila
+        for (int i = 0; i < posicao; ++i) // percorre até a posição desejada
         {
             atual = atual->proximo;
         }
 
-        while (!atual->pilha.estaVazia() && atual->pilha.consultarTopo() == cor)
+        while (!atual->pilha.estaVazia() && atual->pilha.consultarTopo() == cor) // enquanto a pilha não estiver vazia e o topo for da mesma cor
         {
-            atual->pilha.desempilhar();
+            atual->pilha.desempilhar(); // desempilha o elemento do topo
         }
     }
 
-    // Função para remover colunas vazias
+    // função para remover colunas vazias
     void removerColunasVazias()
     {
-        while (!estaVazia() && inicio->pilha.estaVazia())
+        while (!estaVazia() && inicio->pilha.estaVazia()) // enquanto a fila não estiver vazia e o início estiver vazio
         {
-            desenfileirar();
+            desenfileirar(); // remove o início da fila
         }
 
-        Node *atual = inicio;
-        Node *anterior = nullptr;
-        while (atual != nullptr)
+        Node *atual = inicio;     // começa pelo início da fila
+        Node *anterior = nullptr; // ponteiro para o nó anterior
+        while (atual != nullptr)  // percorre todos os nós da fila
         {
-            if (atual->pilha.estaVazia())
+            if (atual->pilha.estaVazia()) // se a pilha do nó atual estiver vazia
             {
-                if (anterior != nullptr)
+                if (anterior != nullptr) // se não estiver no início da fila
                 {
-                    anterior->proximo = atual->proximo;
-                    if (atual == fim)
+                    anterior->proximo = atual->proximo; // o próximo do anterior aponta para o próximo do atual
+                    if (atual == fim)                   // se o atual for o fim da fila
                     {
-                        fim = anterior;
+                        fim = anterior; // o anterior é o novo fim
                     }
-                    delete atual;
-                    atual = anterior->proximo;
+                    delete atual;              // deleta o nó atual
+                    atual = anterior->proximo; // atualiza o atual para o próximo do anterior
                 }
                 else
                 {
-                    Node *temp = atual;
-                    inicio = atual->proximo;
-                    delete temp;
-                    atual = inicio;
+                    Node *temp = atual;      // armazena o nó atual
+                    inicio = atual->proximo; // o início é atualizado para o próximo do atual
+                    delete temp;             // deleta o antigo início
+                    atual = inicio;          // atualiza o atual para o novo início
                 }
-                --tamanho;
+                --tamanho; // decrementa o tamanho da fila
             }
             else
             {
-                anterior = atual;
-                atual = atual->proximo;
+                anterior = atual;       // atualiza o anterior para o atual
+                atual = atual->proximo; // atualiza o atual para o próximo nó
             }
         }
     }
 
-    // Função para obter o topo de uma pilha específica
+    // função para obter o topo de uma pilha específica
     int consultarTopo(int posicao) const
     {
-        if (posicao < 0 || posicao >= tamanho)
+        if (posicao < 0 || posicao >= tamanho) // verifica se a posição é válida
         {
-            return -1; // Posição inválida
+            return -1; // posição inválida, retorna -1
         }
 
-        Node *atual = inicio;
-        for (int i = 0; i < posicao; ++i)
+        Node *atual = inicio;             // começa pelo início da fila
+        for (int i = 0; i < posicao; ++i) // percorre até a posição desejada
         {
             atual = atual->proximo;
         }
-        return atual->pilha.consultarTopo();
+        return atual->pilha.consultarTopo(); // retorna o topo da pilha na posição desejada
     }
 
-    // Função para imprimir os elementos da fila de pilhas no formato desejado
+    // função para imprimir os elementos da fila de pilhas no formato desejado
     void imprimirCaso(int caso) const
     {
-        cout << "caso " << caso << ":";
-        Node *atual = inicio;
-        while (atual != nullptr)
+        cout << "caso " << caso << ":"; // imprime o número do caso
+        Node *atual = inicio;           // começa pelo início da fila
+        while (atual != nullptr)        // percorre todos os nós da fila
         {
-            cout << " " << atual->pilha.consultarTopo();
-            atual = atual->proximo;
+            cout << " " << atual->pilha.consultarTopo(); // imprime o topo da pilha de cada nó
+            atual = atual->proximo;                      // avança para o próximo nó
         }
-        cout << endl;
+        cout << endl; // quebra de linha após imprimir todos os nós
     }
 
-    // Função que retorna o número de pilhas na fila
+    // função que retorna o número de pilhas na fila
     int tamanhoF() const
     {
-        return tamanho;
+        return tamanho; // retorna o tamanho da fila
     }
 
-    // Função para imprimir o estado atual das pilhas
+    // função para imprimir o estado atual das pilhas
     void imprimirEstado() const
     {
-        Node *atual = inicio;
-        int coluna = 1;
-        while (atual != nullptr)
+        Node *atual = inicio; // começa pelo início da fila
+        int coluna = 1;       // contador de colunas
+
+        while (atual != nullptr) // percorre todos os nós da fila
         {
-            cout << "Coluna " << coluna << ": ";
-            atual->pilha.imprimir();
-            cout << endl;
-            atual = atual->proximo;
-            ++coluna;
+            cout << "coluna " << coluna << ": "; // imprime o número da coluna
+            atual->pilha.imprimir();             // imprime os elementos da pilha
+            cout << endl;                        // quebra de linha após cada coluna
+            atual = atual->proximo;              // avança para o próximo nó
+            ++coluna;                            // incrementa o contador de colunas
         }
-        cout << endl;
+        cout << endl; // quebra de linha após imprimir todas as colunas
     }
 
-    // Destrutor
+    // destrutor
     ~FilaDePilhas()
     {
-        while (!estaVazia())
+        while (!estaVazia()) // enquanto a fila não estiver vazia
         {
-            desenfileirar();
+            desenfileirar(); // remove o início da fila
         }
     }
 };
 
+// função para processar a entrada
 void processarEntrada(FilaDePilhas &fila, istream &input)
 {
     string linha;
-    while (getline(input, linha))
+    while (getline(input, linha)) // lê cada linha da entrada
     {
         int caso = 0;
 
-        // Trim leading and trailing whitespaces from linha
+        // remove espaços em branco no início e no final da linha
         linha.erase(0, linha.find_first_not_of(" \t\n\r\f\v"));
         linha.erase(linha.find_last_not_of(" \t\n\r\f\v") + 1);
-        if (linha.empty())
+        if (linha.empty()) // se a linha estiver vazia
         {
-            break; // Exit the loop if the line is empty
+            break; // sai do loop
         }
 
-        if (linha == "END")
+        if (linha == "END") // se a linha for "END"
         {
-            continue;
+            continue; // continua para a próxima iteração
         }
         stringstream ss(linha);
         int S, C;
-        ss >> S >> C;
+        ss >> S >> C; // lê os valores de S e C da linha
 
-        int numColunas = fila.tamanhoF();
+        int numColunas = fila.tamanhoF(); // obtém o número de colunas na fila
         if (C < 1000)
         {
             if (S == 0)
             {
-                fila.adicionarAoComeco();
-                fila.empilharNaPilha(0, C);
+                fila.adicionarAoComeco();   // adiciona uma nova pilha ao começo da fila
+                fila.empilharNaPilha(0, C); // empilha o elemento na nova pilha
             }
             else if (S == numColunas + 1)
             {
-                fila.enfileirar();
-                fila.empilharNaPilha(numColunas, C);
+                fila.enfileirar();                   // adiciona uma nova pilha ao fim da fila
+                fila.empilharNaPilha(numColunas, C); // empilha o elemento na nova pilha
             }
             else if (S > 0 && S <= numColunas)
             {
-                int corTopo = fila.consultarTopo(S - 1);
+                int corTopo = fila.consultarTopo(S - 1); // consulta o topo da pilha na posição S-1
                 if (corTopo == C)
                 {
-                    fila.removerPedras(S - 1, C);
-                    fila.removerColunasVazias();
+                    fila.removerPedras(S - 1, C); // remove pedras se o topo tiver a mesma cor
+                    fila.removerColunasVazias();  // remove colunas vazias
                 }
                 else
                 {
-                    fila.empilharNaPilha(S - 1, C);
+                    fila.empilharNaPilha(S - 1, C); // empilha o elemento na pilha na posição S-1
                 }
             }
         }
-        // Imprime o estado atual após cada jogada
-        // cout << "Pilha: " << S << " e Cor: " << C << endl;
+        // imprime o estado atual após cada jogada
+        // cout << "pilha: " << S << " e cor: " << C << endl;
         // fila.imprimirEstado();
     }
 }
@@ -323,14 +327,14 @@ void processarEntrada(FilaDePilhas &fila, istream &input)
 int main()
 {
     int P;
-    cin >> P;
-    cin.ignore();
+    cin >> P;     // lê o número de casos
+    cin.ignore(); // ignora o caractere de nova linha após o número de casos
 
     for (int i = 0; i < P; ++i)
     {
         FilaDePilhas filaDePilhas;
-        processarEntrada(filaDePilhas, cin);
-        filaDePilhas.imprimirCaso(i);
+        processarEntrada(filaDePilhas, cin); // processa a entrada para cada caso
+        filaDePilhas.imprimirCaso(i);        // imprime o resultado do caso atual
     }
 
     return 0;
