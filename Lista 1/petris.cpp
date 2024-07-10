@@ -294,7 +294,7 @@ void processarEntrada(FilaDePilhas &fila, istream &input)
         int numColunas = fila.tamanhoF(); // obtém o número de colunas na fila
         if (C < 1000)
         {
-            if (S == 0)
+            if (S == 0) 
             {
                 fila.adicionarAoComeco();   // adiciona uma nova pilha ao começo da fila
                 fila.empilharNaPilha(0, C); // empilha o elemento na nova pilha
