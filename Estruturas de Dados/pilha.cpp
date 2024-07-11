@@ -27,7 +27,7 @@ public:
 
         // redimensiona a pilha, caso necessário
         if (topo + 1 >= capacidade) {
-            capacidade++;
+            capacidade *= 2;
             int* novaPilha = new int[capacidade];
             for (int i = 0; i <= topo; i++) {
                 novaPilha[i] = pilha[i];
@@ -41,29 +41,43 @@ public:
     
     }
 
-    // função para verificar se a pilha está vazia
-    bool estaVazia() {
-        return topo == -1;
+    int desempilhar()
+    {
+        if (estaVazia())
+        {
+            throw runtime_error("A pilha está vazia"); // lança exceção se a pilha estiver vazia
+        }
+        return pilha[topo--]; // retorna o elemento do topo e decrementa o índice do topo 
     }
 
+    // função para verificar se a pilha está vazia
+    bool estaVazia()
+    {
+        return topo == -1;
+    }
     // função para imprimir os elementos da pilha, de baixo para cima
-    void imprimir () {
+    void imprimir()
+    {
         cout << "Elementos da pilha:" << endl;
-        for (int i = 0; i <= topo; i++) {
+        for (int i = 0; i <= topo; i++)
+        {
             cout << pilha[i] << " ";
         }
     }
 
     // função que retorna o tamanho da pilha
-    int tamanho() {
+    int tamanho()
+    {
         return topo + 1;
     }
 
     // função que retorna o elemento no topo da pilha
-    int top() {
-        if (topo >= 0) {
+    int top()
+    {
+        if (topo >= 0)
+        {
             return pilha[topo]; // elemento no topo da pilha
         }
-        return -1; // retorna -1 se a pilha estiver vazia
+            return -1; // retorna -1 se a pilha estiver vazia
     }
 };
