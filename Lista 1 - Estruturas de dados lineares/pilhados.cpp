@@ -1,3 +1,5 @@
+// https://iudex.io/problem/654ccbdfe0c9bd0001fd509f
+
 #include <iostream>
 using namespace std;
 
@@ -49,7 +51,7 @@ public:
                 pilha[topo] = novoValor; // substitui o novo valor no topo
                 
             } else {
-                paridade = false; // Encerra o loop se não houver mais paridade
+                paridade = false; // encerra o loop se não houver mais paridade
             }
         }
     }
