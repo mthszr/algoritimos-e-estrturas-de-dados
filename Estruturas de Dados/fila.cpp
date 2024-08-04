@@ -77,7 +77,6 @@ public:
     }
        
         
-
     // função que retorna o primeiro elemento da fila
     int primeiroElemento () {
         if (estaVazia()) {
@@ -105,15 +104,3 @@ public:
         }
     }
 };
-
-int main () {
-
-    Fila fila;
-    fila.enfileirar(9);
-    fila.enfileirar(2);
-    fila.enfileirar(4);
-    fila.enfileirar(6);
-    fila.imprimir();
-
-    return 0;
-}
