@@ -1,230 +1,173 @@
 #include <iostream>
-#include <sstream>
-#include <algorithm>
-
 using namespace std;
 
-struct Node
-{
-    int id;
-    int wei;
-    int rnk;
-    Node *left;
-    Node *right;
-    int height;
-    int depth;
+// definindo a estrutura do nó da árvore
+struct node {
+    int chave;               // id do dispositivo
+    int peso;                // total de bytes transmitidos por este dispositivo
+    int altura;              // altura do nó na árvore
+    int pesototalsubarvore;  // soma dos pesps na subárvore com raiz neste nó
+    node* left;
+    node* right;
 
-    Node(int id) : id(id), wei(0), rnk(0), left(nullptr), right(nullptr), height(1), depth(0) {}
+    // construtor que inicializa um nó com chave e peso
+    node(int chave, int peso)
+        : chave(chave), peso(peso), altura(1), pesototalsubarvore(peso), left(nullptr), right(nullptr) {}
 };
 
-class AVLTree
-{
-private:
-    Node *root;
-    int total_bytes;
+// função que retorna a altura de um nó ou 0 se o nó for nulo
+int getaltura(node* node) {
+    return node ? node->altura : 0;
+}
 
-    int height(Node *node)
-    {
-        return node ? node->height : 0;
+// função que retorna o peso total da subárvore de um nó ou 0 se o nó for nulo
+int getpesototalsubarvore(node* node) {
+    return node ? node->pesototalsubarvore : 0;
+}
+
+// função que atualiza a altura e o peso total da subárvore de um nó
+void atualizano(node* node) {
+    if (node) {                                                                                                          // se o nó não for nulo
+        node->altura = 1 + max(getaltura(node->left), getaltura(node->right));                                           // calcula a nova altura
+        node->pesototalsubarvore = node->peso + getpesototalsubarvore(node->left) + getpesototalsubarvore(node->right);  // calcula o novo peso total da subárvore
+    }
+}
+
+// realiza uma rotação simples à direita em um nó y
+node* rotacaodireita(node* y) {
+    node* x = y->left;    // define x como o filho à esquerda de y
+    node* t2 = x->right;  // t2 é o filho à direita de x (subárvore que será reposicionada)
+
+    x->right = y;  // x se torna a nova raiz da subárvore
+    y->left = t2;  // t2 se torna o filho à esquerda de y
+
+    atualizano(y);  // atualiza altura e peso total da subárvore para y
+    atualizano(x);  // atualiza altura e peso total da subárvore para x
+
+    return x;  // retorna a nova raiz da subárvore
+}
+
+// realiza uma rotação simples à esquerda em um nó x
+node* rotacaoesquerda(node* x) {
+    node* y = x->right;  // define y como o filho à direita de x
+    node* t2 = y->left;  // t2 é o filho à esquerda de y (subárvore que será reposicionada)
+
+    y->left = x;    // y se torna a nova raiz da subárvore
+    x->right = t2;  // t2 se torna o filho à direita de x
+
+    atualizano(x);  // atualiza altura e peso total da subárvore para x
+    atualizano(y);  // atualiza altura e peso total da subárvore para y
+
+    return y;  // retorna a nova raiz da subárvore
+}
+
+// retorna o fator de balanceamento de um nó (diferença entre altura da subárvore esquerda e direita)
+int getbalanco(node* node) {
+    return node ? getaltura(node->left) - getaltura(node->right) : 0;
+}
+
+// função para inserir um novo nó na árvore e manter o balanceamento
+node* insert(node* raiz, int chave, int peso) {
+    // caso base: se a raiz é nula, cria um novo nó e o retorna
+    if (!raiz) return new node(chave, peso);
+
+    // se a chave é menor, insere na subárvore esquerda
+    if (chave < raiz->chave)
+        raiz->left = insert(raiz->left, chave, peso);
+    // se a chave é maior, insere na subárvore direita
+    else if (chave > raiz->chave)
+        raiz->right = insert(raiz->right, chave, peso);
+    // se a chave já existe, apenas adiciona o peso ao nó existente
+    else {
+        raiz->peso += peso;
+        raiz->pesototalsubarvore += peso;
+        return raiz;  // retorna o nó sem mudanças estruturais na árvore
     }
 
-    int balanceFactor(Node *node)
-    {
-        return node ? height(node->left) - height(node->right) : 0;
+    // recalcula a altura e o peso total da subárvore após a inserção
+    atualizano(raiz);
+
+    // verifica o fator de balanceamento para determinar se rotações são necessárias
+    int balanco = getbalanco(raiz);
+
+    // caso 1: rotação simples à direita
+    if (balanco > 1 && chave < raiz->left->chave)
+        return rotacaodireita(raiz);
+
+    // caso 2: rotação simples à esquerda
+    if (balanco < -1 && chave > raiz->right->chave)
+        return rotacaoesquerda(raiz);
+
+    // caso 3: rotação dupla à esquerda e depois à direita
+    if (balanco > 1 && chave > raiz->left->chave) {
+        raiz->left = rotacaoesquerda(raiz->left);
+        return rotacaodireita(raiz);
     }
 
-    Node *rightRotate(Node *y)
-    {
-        Node *x = y->left;
-        Node *T2 = x->right;
-
-        x->right = y;
-        y->left = T2;
-
-        y->height = max(height(y->left), height(y->right)) + 1;
-        x->height = max(height(x->left), height(x->right)) + 1;
-
-        y->rnk = calculateRnk(y);
-        x->rnk = calculateRnk(x);
-
-        return x;
+    // caso 4: rotação dupla à direita e depois à esquerda
+    if (balanco < -1 && chave < raiz->right->chave) {
+        raiz->right = rotacaodireita(raiz->right);
+        return rotacaoesquerda(raiz);
     }
 
-    Node *leftRotate(Node *x)
-    {
-        Node *y = x->right;
-        Node *T2 = y->left;
+    // retorna a nova raiz da subárvore (pode ser a mesma se nenhuma rotação foi necessária)
+    return raiz;
+}
 
-        y->left = x;
-        x->right = T2;
 
-        x->height = max(height(x->left), height(x->right)) + 1;
-        y->height = max(height(y->left), height(y->right)) + 1;
+int calcularrank(node* raiz, int chave) {
+    // se o nó é nulo, não há peso para somar
+    if (!raiz)
+        return 0;
 
-        x->rnk = calculateRnk(x);
-        y->rnk = calculateRnk(y);
+    // se a chave no nó atual é maior ou igual à chave fornecida, busca na subárvore esquerda
+    if (raiz->chave >= chave)
+        return calcularrank(raiz->left, chave);
 
-        return y;
+    // se a chave no nó atual é menor, soma o peso deste nó, o peso da subárvore esquerda, e continua buscando na direita
+    else {
+        int x = raiz->peso; // peso do nó atual
+        int y = getpesototalsubarvore(raiz->left); // peso total da subárvore esquerda
+        int z = calcularrank(raiz->right, chave); // continua a busca na subárvore direita
+        return x + y + z; // retorna a soma dos pesos
     }
+}
 
-    Node *insert(Node *node, int id, int wei)
-    {
-        if (!node)
-        {
-            Node *newNode = new Node(id);
-            newNode->wei = wei;
-            total_bytes += wei;
-            return newNode;
-        }
+int main() {
+    node* root = nullptr; 
+    string command;        
+    int totalweight = 0; 
 
-        if (id < node->id)
-        {
-            node->left = insert(node->left, id, wei);
-        }
-        else if (id > node->id)
-        {
-            node->right = insert(node->right, id, wei);
-        }
-        else
-        {
-            node->wei += wei;
-            total_bytes += wei;
-            return node;
-        }
+    // loop para ler os comandos até o fim da entrada
+    while (cin >> command) {
+        if (command == "END") break; // se o comando for "end", termina o loop
 
-        node->height = max(height(node->left), height(node->right)) + 1;
-
-        int balance = balanceFactor(node);
-
-        if (balance > 1 && id < node->left->id)
-        {
-            return rightRotate(node);
-        }
-
-        if (balance < -1 && id > node->right->id)
-        {
-            return leftRotate(node);
-        }
-
-        if (balance > 1 && id > node->left->id)
-        {
-            node->left = leftRotate(node->left);
-            return rightRotate(node);
-        }
-
-        if (balance < -1 && id < node->right->id)
-        {
-            node->right = rightRotate(node->right);
-            return leftRotate(node);
-        }
-
-        node->rnk = calculateRnk(node);
-
-        return node;
-    }
-
-    int calculateRnk(Node *node)
-    {
-        if (!node)
-            return 0;
-        int leftRnk = node->left ? node->left->wei : 0;
-        int rightRnk = node->right ? node->right->rnk : 0;
-        return leftRnk + rightRnk;
-    }
-
-    Node *find(Node *node, int id)
-    {
-        if (!node || node->id == id)
-            return node;
-        if (id < node->id)
-            return find(node->left, id);
-        return find(node->right, id);
-    }
-
-    int queryRnk(Node *node, int id)
-    {
-        if (!node)
-            return 0;
-        if (id <= node->id)
-            return queryRnk(node->left, id);
-        return node->wei + queryRnk(node->left, id) + queryRnk(node->right, id);
-    }
-
-    void getWeiAndDepth(Node *node, int id, int depth, int &wei, int &d)
-    {
-        if (!node)
-        {
-            wei = 0;
-            d = -1;
-            return;
-        }
-        if (node->id == id)
-        {
-            wei = node->wei;
-            d = depth;
-            return;
-        }
-        else if (id < node->id)
-        {
-            getWeiAndDepth(node->left, id, depth + 1, wei, d);
-        }
-        else
-        {
-            getWeiAndDepth(node->right, id, depth + 1, wei, d);
-        }
-    }
-
-public:
-    AVLTree() : root(nullptr), total_bytes(0) {}
-
-    void add(int id, int wei)
-    {
-        root = insert(root, id, wei);
-        cout << total_bytes << endl;
-    }
-
-    void weiQuery(int id)
-    {
-        int wei, depth;
-        getWeiAndDepth(root, id, 0, wei, depth);
-        cout << wei << " " << depth << endl;
-    }
-
-    void rnkQuery(int id)
-    {
-        cout << queryRnk(root, id) << endl;
-    }
-};
-
-int main()
-{
-    AVLTree tree;
-    string command;
-
-    while (getline(cin, command))
-    {
-        if (command == "END")
-            break;
-
-        istringstream iss(command);
-        string op;
-        int id, wei;
-
-        iss >> op;
-        if (op == "ADD")
-        {
-            iss >> id >> wei;
-            tree.add(id, wei);
-        }
-        else if (op == "WEI")
-        {
-            iss >> id;
-            tree.weiQuery(id);
-        }
-        else if (op == "RNK")
-        {
-            iss >> id;
-            tree.rnkQuery(id);
+        int x, w; // variáveis para armazenar os valores de x e w
+        if (command == "WEI") {
+            cin >> x >> w; // lê os valores de x e w
+            root = insert(root, x, w); // insere na árvore
+            totalweight += w; // atualiza o peso total
+            cout << totalweight << endl; // imprime o peso total
+        } else if (command == "WEI") {
+            cin >> x;  // lê o valor de x
+            int depth = 0; // variável para armazenar a profundidade do nó
+            node* result = root; // começa a busca na raiz
+            while (result && result->chave != x) { // busca pelo nó com chave x
+                if (x < result->chave) { // se x for menor, vai para a esquerda
+                    result = result->left;  
+                } else { // se x for maior, vai para a direita
+                    result = result->right;  
+                }
+                depth++; // incrementa a profundidade a cada passo
+            }
+            if (result) {
+                cout << result->peso << " " << depth << endl; // se o nó for encontrado, imprime o peso e a profundidade
+            } else {
+                cout << "0 -1" << endl; // se o nó não for encontrado, imprime "0 -1"
+            }
+        } else if (command == "RNK") {
+            cin >> x; // lê o valor de x
+            cout << calcularrank(root, x) << endl; // calcula e imprime o rank de x
         }
     }
 
