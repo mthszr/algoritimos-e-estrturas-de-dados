@@ -1,3 +1,5 @@
+// https://iudex.io/problem/6234ff9a3f99be0001bcf002
+
 #include <iostream>
 using namespace std;
 
