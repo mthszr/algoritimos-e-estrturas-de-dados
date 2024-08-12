@@ -1,87 +1,123 @@
-#include <cmath>
 #include <cstdint>
 #include <iostream>
-#include <list>
-#include <vector>
 
 using namespace std;
 
-struct conexao {
+struct Pair {
     uint32_t timestamp;
-    uint32_t cliente;
+    uint32_t client;
+    Pair* next;
+
+    Pair(uint32_t t, uint32_t c) : timestamp(t), client(c), next(nullptr) {}
 };
 
-class Hashtable {
-   public:
-    Hashtable(int m, float lmax)
-        : M(m), Lmax(lmax), num_pares(0) {
-        tabela.resize(M);
-    }
-
-    void inserir(uint32_t timestamp, uint32_t cliente) {
-        verificar_rehashing();
-
-        int pos = hash(timestamp);
-        auto& lista = tabela[pos];
-
-        // inserir a nova conexão de forma ordenada
-        auto it = lista.begin();
-        while (it != lista.end() && it->timestamp < timestamp) {
-            ++it;
-        }
-        lista.insert(it, {timestamp, cliente});
-        ++num_pares;
-
-        // imprimir a posição e o tamanho da lista após inserção
-        cout << pos << " " << lista.size() << endl;
-    }
-
-    void consultar(uint32_t timestamp) {
-        int pos = hash(timestamp);
-        auto& lista = tabela[pos];
-
-        // procurar o cliente na lista
-        int index = 0;
-        for (const auto& c : lista) {
-            if (c.timestamp == timestamp) {
-                cout << c.cliente << " " << index << endl;
-                return;
-            }
-            ++index;
-        }
-        cout << "-1 -1" << endl;
-    }
-
+class HashTable {
    private:
-    int M;                         // tamanho da tabela
-    float Lmax;                    // fator de carga máximo
-    int num_pares;                 // número total de pares
-    vector<list<conexao>> tabela;  // tabela de hash
+    Pair** table;  // array de ponteiros para a cabeça das listas
+    int M;
+    float Lmax;
+    int count;
 
-    int hash(uint32_t timestamp) const {
-        return timestamp % M;
+    int hash(uint32_t T) {
+        return T % M;
     }
 
-    void verificar_rehashing() {
-        float carga_atual = static_cast<float>(num_pares) / M;
-        if (carga_atual > Lmax) {
-            rehash();
-        }
+    float load_factor() {
+        return static_cast<float>(count) / M;
     }
 
     void rehash() {
-        vector<list<conexao>> nova_tabela(2 * M + 1);
-        M = 2 * M + 1;  // novo tamanho da tabela
+        int oldM = M;
+        M = 2 * M + 1;
+        Pair** new_table = new Pair*[M];
+        for (int i = 0; i < M; ++i) {
+            new_table[i] = nullptr;
+        }
 
-        // redistribuir os pares na nova tabela
-        for (const auto& lista : tabela) {
-            for (const auto& c : lista) {
-                int nova_pos = c.timestamp % M;
-                nova_tabela[nova_pos].push_back(c);
+        for (int i = 0; i < oldM; ++i) {
+            Pair* node = table[i];
+            while (node != nullptr) {
+                int newIndex = node->timestamp % M;
+                Pair* nextNode = node->next;
+
+                // insere o node na nova tabela mantendo a ordem
+                Pair** newList = &new_table[newIndex];
+                while (*newList != nullptr && (*newList)->timestamp < node->timestamp) {
+                    newList = &(*newList)->next;
+                }
+                node->next = *newList;
+                *newList = node;
+
+                node = nextNode;
             }
         }
 
-        tabela = move(nova_tabela);  // substituir a tabela antiga
+        delete[] table;
+        table = new_table;
+    }
+
+   public:
+    HashTable(int initialM, float maxLoadFactor) : M(initialM), Lmax(maxLoadFactor), count(0) {
+        table = new Pair*[M];
+        for (int i = 0; i < M; ++i) {
+            table[i] = nullptr;
+        }
+    }
+
+    ~HashTable() {
+        for (int i = 0; i < M; ++i) {
+            Pair* node = table[i];
+            while (node != nullptr) {
+                Pair* temp = node;
+                node = node->next;
+                delete temp;
+            }
+        }
+        delete[] table;
+    }
+
+    void insert(uint32_t T, uint32_t C) {
+        if (load_factor() > Lmax) {
+            rehash();
+        }
+
+        int index = hash(T);
+        Pair** lst = &table[index];
+        Pair* newNode = new Pair(T, C);
+        // insere mantendo a ordem
+        while (*lst != nullptr && (*lst)->timestamp < T) {
+            lst = &(*lst)->next;
+        }
+        newNode->next = *lst;
+        *lst = newNode;
+        count++;
+
+        // contar o tamanho da lista
+        int listSize = 0;
+        Pair* current = table[index];
+        while (current != nullptr) {
+            listSize++;
+            current = current->next;
+        }
+
+        cout << index << " " << listSize << endl;
+    }
+
+    void query(uint32_t T) {
+        int index = hash(T);
+        Pair* node = table[index];
+        int position = 0;
+
+        while (node != nullptr) {
+            if (node->timestamp == T) {
+                cout << node->client << " " << position << endl;
+                return;
+            }
+            node = node->next;
+            position++;
+        }
+
+        cout << "-1 -1" << endl;
     }
 };
 
@@ -90,21 +126,20 @@ int main() {
     float Lmax;
     cin >> M >> Lmax;
 
-    Hashtable hashtable(M, Lmax);
+    HashTable ht(M, Lmax);
 
-    string comando;
-    while (cin >> comando) {
-        if (comando == "END") {
+    string command;
+    while (cin >> command) {
+        if (command == "END")
             break;
-        }
-
-        uint32_t timestamp, cliente;
-        if (comando == "NEW") {
-            cin >> timestamp >> cliente;
-            hashtable.inserir(timestamp, cliente);
-        } else if (comando == "QRY") {
-            cin >> timestamp;
-            hashtable.consultar(timestamp);
+        else if (command == "NEW") {
+            uint32_t T, C;
+            cin >> T >> C;
+            ht.insert(T, C);
+        } else if (command == "QRY") {
+            uint32_t T;
+            cin >> T;
+            ht.query(T);
         }
     }
 
