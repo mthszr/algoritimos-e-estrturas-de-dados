@@ -1,145 +1,186 @@
-#include <cstdint>
 #include <iostream>
+#include <cstdint>
 
 using namespace std;
 
-struct Pair {
+struct Par {
     uint32_t timestamp;
-    uint32_t client;
-    Pair* next;
-
-    Pair(uint32_t t, uint32_t c) : timestamp(t), client(c), next(nullptr) {}
+    uint32_t cliente;
+    // estrutura para armazenar o timestamp e o cliente associado
 };
 
-class HashTable {
+class TabelaHash {
    private:
-    Pair** table;  // array de ponteiros para a cabeça das listas
-    int M;
-    float Lmax;
-    int count;
+    Par** tabela;         // array de ponteiros para arrays de Par, representando as listas de colisão
+    int* tamanhos;        // array que armazena o tamanho de cada lista (número de elementos)
+    int M;                // tamanho da tabela hash (número de listas)
+    float fatorCargaMax;  // fator de carga máximo permitido antes de um rehash
+    int contador;         // contador total de elementos na tabela
 
-    int hash(uint32_t T) {
+    // função de hash simples que retorna o índice na tabela usando o módulo do timestamp
+    int funcaoHash(uint32_t T) {
         return T % M;
     }
 
-    float load_factor() {
-        return static_cast<float>(count) / M;
+    // calcula o fator de carga atual da tabela
+    float fator_carga() {
+        return static_cast<float>(contador) / M;
     }
 
+    // função para redimensionar a tabela hash quando o fator de carga excede o limite
     void rehash() {
-        int oldM = M;
-        M = 2 * M + 1;
-        Pair** new_table = new Pair*[M];
+        int M_antigo = M;                    // armazena o tamanho antigo da tabela
+        M = 2 * M + 1;                       // dobra o tamanho da tabela e soma 1 para manter um número ímpar
+        Par** nova_tabela = new Par*[M];     // cria uma nova tabela com o novo tamanho
+        int* novos_tamanhos = new int[M]();  // inicializa os tamanhos das novas listas para zero
+
+        // inicializa os ponteiros das novas listas para nullptr
         for (int i = 0; i < M; ++i) {
-            new_table[i] = nullptr;
+            nova_tabela[i] = nullptr;
+            novos_tamanhos[i] = 0;
         }
 
-        for (int i = 0; i < oldM; ++i) {
-            Pair* node = table[i];
-            while (node != nullptr) {
-                int newIndex = node->timestamp % M;
-                Pair* nextNode = node->next;
+        // realoca todos os elementos da tabela antiga para a nova tabela
+        for (int i = 0; i < M_antigo; ++i) {
+            for (int j = 0; j < tamanhos[i]; ++j) {
+                Par p = tabela[i][j];                      // copia cada elemento das listas antigas
+                int novoIndice = funcaoHash(p.timestamp);  // calcula o novo índice na nova tabela
 
-                // insere o node na nova tabela mantendo a ordem
-                Pair** newList = &new_table[newIndex];
-                while (*newList != nullptr && (*newList)->timestamp < node->timestamp) {
-                    newList = &(*newList)->next;
+                novos_tamanhos[novoIndice]++;  // incrementa o tamanho da nova lista
+                Par* novoArray = new Par[novos_tamanhos[novoIndice]];
+
+                // insere o elemento na posição correta, mantendo a ordem na nova lista
+                int k = 0;
+                while (k < novos_tamanhos[novoIndice] - 1 && nova_tabela[novoIndice] && nova_tabela[novoIndice][k].timestamp < p.timestamp) {
+                    novoArray[k] = nova_tabela[novoIndice][k];
+                    k++;
                 }
-                node->next = *newList;
-                *newList = node;
 
-                node = nextNode;
+                novoArray[k] = p;
+
+                // copia os elementos restantes da lista antiga
+                while (k < novos_tamanhos[novoIndice] - 1) {
+                    novoArray[k + 1] = nova_tabela[novoIndice][k];
+                    k++;
+                }
+
+                delete[] nova_tabela[novoIndice];     // libera a memória da lista antiga
+                nova_tabela[novoIndice] = novoArray;  // atualiza a lista com a nova
             }
+            delete[] tabela[i];  // libera a memória da lista antiga na posição `i`
         }
 
-        delete[] table;
-        table = new_table;
+        delete[] tabela;            // libera a memória da tabela antiga
+        delete[] tamanhos;          // libera a memória do array de tamanhos antigo
+        tabela = nova_tabela;       // aponta para a nova tabela
+        tamanhos = novos_tamanhos;  // atualiza o array de tamanhos
     }
 
    public:
-    HashTable(int initialM, float maxLoadFactor) : M(initialM), Lmax(maxLoadFactor), count(0) {
-        table = new Pair*[M];
+    // construtor que inicializa a tabela hash com o tamanho inicial e o fator de carga máximo
+    TabelaHash(int M_inicial, float fatorCargaMaximo) : M(M_inicial), fatorCargaMax(fatorCargaMaximo), contador(0) {
+        tabela = new Par*[M];     // aloca a tabela com `M` listas
+        tamanhos = new int[M]();  // inicializa o array de tamanhos com zeros
         for (int i = 0; i < M; ++i) {
-            table[i] = nullptr;
+            tabela[i] = nullptr;  // inicializa todas as listas como vazias
         }
     }
 
-    ~HashTable() {
+    // destrutor que libera toda a memória alocada
+    ~TabelaHash() {
         for (int i = 0; i < M; ++i) {
-            Pair* node = table[i];
-            while (node != nullptr) {
-                Pair* temp = node;
-                node = node->next;
-                delete temp;
-            }
+            delete[] tabela[i];  // libera a memória de cada lista na tabela
         }
-        delete[] table;
+        delete[] tabela;    // libera a memória do array de ponteiros da tabela
+        delete[] tamanhos;  // libera a memória do array de tamanhos
     }
 
-    void insert(uint32_t T, uint32_t C) {
-        if (load_factor() > Lmax) {
+    void inserir(uint32_t T, uint32_t C) {
+        // se o fator de carga exceder o limite, redimensiona a tabela
+        if (fator_carga() > fatorCargaMax) {
             rehash();
         }
 
-        int index = hash(T);
-        Pair** lst = &table[index];
-        Pair* newNode = new Pair(T, C);
-        // insere mantendo a ordem
-        while (*lst != nullptr && (*lst)->timestamp < T) {
-            lst = &(*lst)->next;
-        }
-        newNode->next = *lst;
-        *lst = newNode;
-        count++;
+        int indice = funcaoHash(T);             // calcula o índice na tabela
+        int tamanho = tamanhos[indice];         // obtém o tamanho atual da lista nesse índice
+        Par* novoArray = new Par[tamanho + 1];  // cria um novo array para a lista, com espaço extra para o novo elemento
 
-        // contar o tamanho da lista
-        int listSize = 0;
-        Pair* current = table[index];
-        while (current != nullptr) {
-            listSize++;
-            current = current->next;
+        // busca binária para encontrar a posição correta de inserção na lista ordenada
+        int baixo = 0, alto = tamanho;
+        while (baixo < alto) {
+            int meio = (baixo + alto) / 2;
+            if (tabela[indice][meio].timestamp < T) {
+                baixo = meio + 1;
+            } else {
+                alto = meio;
+            }
         }
 
-        cout << index << " " << listSize << endl;
+        // copia os elementos da lista antiga até a posição de inserção
+        for (int i = 0; i < baixo; ++i) {
+            novoArray[i] = tabela[indice][i];
+        }
+
+        novoArray[baixo] = {T, C};  // insere o novo elemento na posição correta
+
+        // copia os elementos restantes após a posição de inserção
+        for (int i = baixo; i < tamanho; ++i) {
+            novoArray[i + 1] = tabela[indice][i];
+        }
+
+        delete[] tabela[indice];     // libera a memória do array antigo da lista
+        tabela[indice] = novoArray;  // atualiza a lista com o novo array
+        tamanhos[indice]++;          // incrementa o tamanho da lista
+        contador++;                  // incrementa o contador total de elementos na tabela
+
+        // imprime o índice e o tamanho atual da lista no índice
+        cout << indice << " " << tamanhos[indice] << endl;
     }
 
-    void query(uint32_t T) {
-        int index = hash(T);
-        Pair* node = table[index];
-        int position = 0;
+    void consultar(uint32_t T) {
+        int indice = funcaoHash(T);      // calcula o índice na tabela
+        int tamanho = tamanhos[indice];  // obtém o tamanho da lista nesse índice
 
-        while (node != nullptr) {
-            if (node->timestamp == T) {
-                cout << node->client << " " << position << endl;
-                return;
+        // busca binária para encontrar a posição do elemento na lista
+        int baixo = 0, alto = tamanho;
+        while (baixo < alto) {
+            int meio = (baixo + alto) / 2;
+            if (tabela[indice][meio].timestamp < T) {
+                baixo = meio + 1;
+            } else {
+                alto = meio;
             }
-            node = node->next;
-            position++;
         }
 
-        cout << "-1 -1" << endl;
+        // verifica se o elemento foi encontrado e imprime o cliente e a posição
+        if (baixo < tamanho && tabela[indice][baixo].timestamp == T) {
+            cout << tabela[indice][baixo].cliente << " " << baixo << endl;
+        } else {
+            // se o elemento não foi encontrado, imprime "-1 -1"
+            cout << "-1 -1" << endl;
+        }
     }
 };
 
 int main() {
     int M;
-    float Lmax;
-    cin >> M >> Lmax;
+    float fatorCargaMax;
+    cin >> M >> fatorCargaMax;
 
-    HashTable ht(M, Lmax);
+    TabelaHash th(M, fatorCargaMax);
 
-    string command;
-    while (cin >> command) {
-        if (command == "END")
+    string comando;
+    while (cin >> comando) {
+        if (comando == "END")
             break;
-        else if (command == "NEW") {
+        else if (comando == "NEW") {
             uint32_t T, C;
             cin >> T >> C;
-            ht.insert(T, C);
-        } else if (command == "QRY") {
+            th.inserir(T, C);
+        } else if (comando == "QRY") {
             uint32_t T;
             cin >> T;
-            ht.query(T);
+            th.consultar(T);
         }
     }
 
