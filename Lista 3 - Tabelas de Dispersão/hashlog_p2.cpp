@@ -1,7 +1,9 @@
+// https://iudex.io/problem/62e444b2f485b80001381e27
+
 #include <iostream>
 #include <cstdint>
 
-using namespace std;
+         using namespace std;
 
 struct Par {
     uint32_t timestamp;
