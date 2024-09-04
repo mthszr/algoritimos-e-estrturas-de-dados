@@ -1,87 +1,45 @@
-#include <iostream>
-#include <vector>
+// https://iudex.io/problem/5bcc95305cd44b0001fdbf74
 
-using namespace std;
+#include<stdio.h>
+#include<algorithm> // swap
 
-const int MAX = 10000;  // número máximo de células
+int t,n,m,w,q,x,y,linha,num,par[10005],sz[10005];
 
-int pai[MAX], profundidade[MAX];
-
-// função para encontrar o representante de um conjunto
-int find(int x) {
-    if (pai[x] != x) {
-        pai[x] = find(pai[x]);  // compressão de caminho
-    }
-    return pai[x];
+int find(int a) {
+    if (par[a] == a) return a;
+    return par[a] = find(par[a]);
 }
 
-// função para unir dois conjuntos
-void unir(int x, int y) {
-    int raiz_x = find(x);
-    int raiz_y = find(y);
-
-    if (raiz_x != raiz_y) {
-        if (profundidade[raiz_x] > profundidade[raiz_y]) {
-            pai[raiz_y] = raiz_x;
-        } else if (profundidade[raiz_x] < profundidade[raiz_y]) {
-            pai[raiz_x] = raiz_y;
-        } else {
-            pai[raiz_y] = raiz_x;
-            profundidade[raiz_x]++;
-        }
-    }
+void join(int a, int b) {
+    a = find(a), b = find(b);
+    if (a == b) return;
+    if (sz[a] < sz[b]) std::swap(a,b);
+    sz[a] += sz[b];
+    par[b] = a;
 }
 
-int main() {
-    int k;
-    cin >> k;
+int main()
+{
+    scanf("%d",&t);
 
-    for (int caso = 0; caso < k; caso++) {
-        int n, m, q;
-        cin >> n >> m >> q;
+    for (int caso = 0; caso < t; caso++) {
+        
+        scanf("%d %d %d", &n,&m,&q);
 
-        int tamanho = n * n;
-
-        // inicializar união-find
-        for (int i = 0; i < tamanho; i++) {
-            pai[i] = i;
-            profundidade[i] = 0;
-        }
-
-        // processar as paredes removidas
+        for (int i = 0; i < n*n; i++) par[i] = i, sz[i] = 1;
+        
         for (int i = 0; i < m; i++) {
-            int w;
-            cin >> w;
-
-            int linha = w / (2 * (n - 1));   // linha onde a parede está localizada
-            int coluna = w % (2 * (n - 1));  // coluna onde a parede está localizada
-
-            if (coluna < n - 1) {  // parede vertical
-                int cell1 = linha * n + coluna;
-                int cell2 = cell1 + 1;
-                unir(cell1, cell2);
-            } else {  // parede horizontal
-                int cell1 = (linha * n) + (coluna - (n - 1));
-                int cell2 = cell1 + n;
-                unir(cell1, cell2);
-            }
+            scanf("%d",&w);
+            linha = w / (2*n - 1); // 2n-1 paredes por linha
+            num = w % (2*n - 1); // para uma dada linha, numerando colunas de 0 a 2n-2. as primeiras n-1 sÃ£o verticais.
+            if (num < n-1) join(linha*n + num, linha*n + num + 1); // parede vertical: junta a com a+1
+            else join(linha*n + num-(n-1), linha*n + n + num-(n-1)); // parede horizontal: junta a com a+n
         }
-
-        // processar as consultas
-        for (int j = 0; j < q; j++) {
-            int a, b;
-            cin >> a >> b;
-
-            cout << caso << "." << j << " ";
-            if (find(a) == find(b)) {
-                cout << "1" << endl;
-            } else {
-                cout << "0" << endl;
-            }
-        }
-
-        cout << endl;  // linha em branco entre os casos
-    }
-
-    return 0;
+        
+        for (int i = 0; i < q; i++){
+            scanf("%d %d", &x, &y);
+            printf("%d.%d %d\n",caso,i,find(x) == find(y));
+        }        
+        printf("\n");
+    } 
 }
