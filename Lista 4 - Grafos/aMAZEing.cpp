@@ -1,5 +1,6 @@
-#include <iostream>
+// https://iudex.io/problem/5bcc95305cd44b0001fdbf74
 
+#include <iostream>
 using namespace std;
 
 const int MAX_N = 100;                // tamanho máximo do labirinto
