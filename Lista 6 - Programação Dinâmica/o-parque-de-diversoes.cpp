@@ -1,74 +1,78 @@
-#include <algorithm>
+// https://iudex.io/problem/62797c280b5c8500010c5dd6
+
+#include <cmath>
 #include <iostream>
 using namespace std;
 
-// Definição de limites máximos
-const int MAX_N = 100;
-const int MAX_V = 1000;
-const int MAX_K = 25000;
+const int MAX_N = 100;    // número máximo de brinquedos
+const int MAX_K = 25000;  // número máximo de créditos
 
-// Estrutura para representar cada corrida como um item
-struct Item {
-    int cost;
-    int fun;
+struct Brinquedo {
+    int S;  // diversão inicial
+    int B;  // fator de aborrecimento
+    int C;  // custo
 };
 
-// Função principal
+// função para calcular o número máximo de corridas válidas para um brinquedo
+int max_corridas(int S, int B) {
+    if (B == 0) return 1;
+    return (int)(sqrt(S / (double)B)) + 1;
+}
+
+// função para calcular a diversão de um brinquedo na corrida t
+int calcular_diversao(int S, int B, int t) {
+    int F = S - (t - 1) * (t - 1) * B;  // calcula a diversão da t-ésima corrida
+    return (F < 0) ? 0 : F;             // evita diversão negativa
+}
+
 int main() {
     ios::sync_with_stdio(false);
     cin.tie(0);
     cout.tie(0);
 
-    int N;
+    int N;  // número de brinquedos
     cin >> N;
 
-    // Arrays para armazenar S[i], B[i], C[i]
-    int S[MAX_N], B[MAX_N], C[MAX_N];
-    // Array de itens
-    Item items[MAX_N * MAX_N];  // limite máximo estimado para corridas
+    Brinquedo brinquedos[MAX_N];  // array para armazenar os brinquedos
 
-    int totalItems = 0;
-
-    // Leitura dos dados dos brinquedos e geração das corridas possíveis
+    // leitura dos dados dos brinquedos
     for (int i = 0; i < N; ++i) {
-        cin >> S[i] >> B[i] >> C[i];
-        int t = 1;
-        while (true) {
-            // Calcula a diversão para a t-ésima corrida
-            long long F = (long long)S[i] - ((long long)(t - 1) * (t - 1) * (long long)B[i]);
-            if (F <= 0) break;
-            // Armazena o item
-            items[totalItems++] = {C[i], (int)F};
-            t++;
-        }
+        cin >> brinquedos[i].S >> brinquedos[i].B >> brinquedos[i].C;
     }
 
-    int V;
+    int V;  // número de visitas
     cin >> V;
 
-    // Leitura de todas as visitas
-    int K[MAX_V];
+    int K[V];  // array para armazenar os créditos de cada visita
     for (int j = 0; j < V; ++j) {
-        cin >> K[j];
+        cin >> K[j];  // lê os créditos para cada visita
     }
 
-    // Para cada visita, realizar o Knapsack 0-1
-    for (int j = 0; j < V; ++j) {
-        int credit = K[j];
-        // Inicialização do vetor de DP com tamanho máximo de créditos + 1
-        int dp[MAX_K + 1] = {0};
+    int dp[MAX_K + 1];  // array dp para armazenar a diversão máxima para cada número de créditos
 
-        // Iteração sobre todos os itens
-        for (int i = 0; i < totalItems; ++i) {
-            // Iteração reversa para garantir 0-1 Knapsack
-            for (int c = credit; c >= items[i].cost; --c) {
-                dp[c] = max(dp[c], dp[c - items[i].cost] + items[i].fun);
+    // inicializa o array dp manualmente
+    for (int i = 0; i <= MAX_K; ++i) {
+        dp[i] = 0;  // todos os valores são inicializados como 0
+    }
+
+    // calcula o knapsack uma única vez para o valor máximo de créditos (MAX_K)
+    for (int i = 0; i < N; ++i) {
+        int max_t = max_corridas(brinquedos[i].S, brinquedos[i].B);
+
+        // atualiza a tabela dp para cada corrida válida do brinquedo
+        for (int t = 1; t <= max_t; ++t) {
+            int F = calcular_diversao(brinquedos[i].S, brinquedos[i].B, t);  // calcula diversão
+            if (F <= 0) break;                                               // evita processar diversões negativas
+            for (int c = MAX_K; c >= brinquedos[i].C; --c) {
+                dp[c] = max(dp[c], dp[c - brinquedos[i].C] + F);
             }
         }
-
-        // Impressão do resultado
-        cout << j << ": " << dp[credit] << "\n";
     }
 
-    return 0;
+    // para cada visita, apenas consulta o valor máximo de diversão na tabela dp
+    for (int j = 0; j < V; ++j) {
+        cout << j << ": " << dp[K[j]] << "\n";  // imprime a diversão máxima para a visita j
+    }
+
+    return 0;  // finaliza o programa
 }
